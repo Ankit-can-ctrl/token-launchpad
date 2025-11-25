@@ -1,10 +1,19 @@
 import {
-  createMint,
-  getOrCreateAssociatedTokenAccount,
-  mintTo,
+  createAssociatedTokenAccountInstruction,
+  createInitializeMintInstruction,
+  createMintToInstruction,
+  getAssociatedTokenAddress,
+  getMinimumBalanceForRentExemptAccount,
+  MINT_SIZE,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey, Transaction, type Signer } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,51 +26,76 @@ const TokenMint = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [ataKey, setAtaKey] = useState<PublicKey>();
 
-  const walletSigner: Signer = {
-    publicKey: publicKey!,
-    signTransaction: async (tx: Transaction) => {
-      if (!signTransaction) throw new Error("Wallet not connected.");
-      return await signTransaction(tx);
-    },
-    signAllTransactions: async (txs: Transaction[]) => {
-      if (!signTransaction) throw new Error("Wallet not connected.");
-      return await Promise.all(txs.map((tx) => signTransaction(tx)));
-    },
-  };
-
   const createToken = async () => {
     if (!publicKey) return toast.error("Connect your wallet.");
-
+    if (!signTransaction) return toast.error("Connect your wallet.");
     try {
       setLoading(true);
       toast.success("creating token.");
-      const payer = Keypair.generate();
-      // create mint
-      const mint = await createMint(
-        connection,
-        walletSigner,
-        publicKey,
-        null,
-        decimals
-      ); //this returns mints publicKey
-      // create ata
-      const ata = await getOrCreateAssociatedTokenAccount(
-        connection,
-        payer,
-        mint, //mints publickey
-        publicKey //owner
-      );
 
-      if (ata) {
-        setAtaKey(ata.address);
-      }
+      // Generate a new keypair for mint account
+      const mintKeypair = Keypair.generate();
+
+      // get min lamports
+      const lamports = await getMinimumBalanceForRentExemptAccount(connection);
+
+      // Derive ata address
+      const ata = await getAssociatedTokenAddress(
+        mintKeypair.publicKey,
+        publicKey
+      );
 
       const amount = initialSupply * 10 ** decimals;
 
-      await mintTo(connection, payer, mint, ata.address, publicKey, amount);
+      // build transaction with all instructions
+      const transaction = new Transaction().add(
+        // 1. create mint account
+        SystemProgram.createAccount({
+          fromPubkey: publicKey,
+          newAccountPubkey: mintKeypair.publicKey,
+          space: MINT_SIZE,
+          lamports,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        // 2. Initial mint
+        createInitializeMintInstruction(
+          mintKeypair.publicKey,
+          decimals,
+          publicKey,
+          null
+        ),
+        // 3. create associate token account
+        createAssociatedTokenAccountInstruction(
+          publicKey,
+          ata,
+          publicKey,
+          mintKeypair.publicKey
+        ),
+        // 4. Mint tokens to ata
+        createMintToInstruction(mintKeypair.publicKey, ata, publicKey, amount)
+      );
 
-      setMintAddress(mint.toBase58());
-      toast.success("Token created succesfully.");
+      // set recent blockhash and fee payer
+      transaction.feePayer = publicKey;
+      transaction.recentBlockhash = (
+        await connection.getLatestBlockhash()
+      ).blockhash;
+
+      // partial sign with minKeypair (has secretKey)
+      transaction.partialSign(mintKeypair);
+
+      // let wallet sign (no secretKey only signTransaction)
+      const signedTx = await signTransaction(transaction);
+
+      // send and confirm
+      const signature = await connection.sendRawTransaction(
+        signedTx.serialize()
+      );
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setAtaKey(ata);
+      setMintAddress(mintKeypair.publicKey.toBase58());
+      toast.success("Token created successfully.");
     } catch (error) {
       console.log("Create token error :", error);
       toast.error("Something went wrong while creating token.");
