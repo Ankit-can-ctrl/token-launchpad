@@ -16,22 +16,45 @@ import {
 } from "@solana/web3.js";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useMetadataUpload } from "../hooks/useMetadataUpload";
+import { createMetadataInstruction } from "../utils/metaplex";
 
 const TokenMint = () => {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useWallet();
+  const { uploadMetadata, isUploading } = useMetadataUpload();
   const [initialSupply, setInitialSupply] = useState<number>(100);
   const [decimals, setDecimals] = useState<number>(8);
   const [mintAddress, setMintAddress] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [ataKey, setAtaKey] = useState<PublicKey>();
 
+  // metadata state
+  const [tokenName, setTokenName] = useState<string>("");
+  const [tokenSymbol, setTokenSymbol] = useState<string>("");
+  const [tokenDescription, setTokenDescription] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const createToken = async () => {
-    if (!publicKey) return toast.error("Connect your wallet.");
-    if (!signTransaction) return toast.error("Connect your wallet.");
+    if (!publicKey || !signTransaction)
+      return toast.error("Connect your wallet.");
+    if (!tokenName || !tokenSymbol)
+      return toast.error("Name and symbol are required.");
+    if (!imageFile) return toast.error("Please upload an image.");
     try {
       setLoading(true);
-      toast.success("creating token.");
+
+      // 1. upload metadata to IPFS
+      toast.info("Uploading metadata to IPFS....");
+      const metadataUri = await uploadMetadata(
+        tokenName,
+        tokenSymbol,
+        tokenDescription,
+        imageFile
+      );
+
+      if (!metadataUri) return toast.error("Metadata upload failed.");
+      toast.success("Metadata uploaded! Creating token...");
 
       // Generate a new keypair for mint account
       const mintKeypair = Keypair.generate();
@@ -72,7 +95,16 @@ const TokenMint = () => {
           mintKeypair.publicKey
         ),
         // 4. Mint tokens to ata
-        createMintToInstruction(mintKeypair.publicKey, ata, publicKey, amount)
+        createMintToInstruction(mintKeypair.publicKey, ata, publicKey, amount),
+
+        // 5. create metadata
+        createMetadataInstruction(
+          mintKeypair.publicKey,
+          publicKey,
+          tokenName,
+          tokenSymbol,
+          metadataUri
+        )
       );
 
       // set recent blockhash and fee payer
@@ -149,7 +181,49 @@ const TokenMint = () => {
           ? mintAddress?.toString()
           : "create token to get your ata address"}
       </p>
-      <button onClick={createToken}>create token</button>
+      <input
+        type="text"
+        placeholder="Token name"
+        value={tokenName}
+        onChange={(e) => setTokenName(e.target.value)}
+      />
+      <input
+        type="text"
+        placeholder="Token symbol"
+        value={tokenSymbol}
+        onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+      />
+      <textarea
+        placeholder="Describe your token..."
+        value={tokenDescription}
+        onChange={(e) => setTokenDescription(e.target.value)}
+      />
+      <div>
+        <label>Token Image</label>
+        <input
+          type="file"
+          accept="image/png, image/jpeg, image/gif, image/webp"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) setImageFile(file);
+          }}
+        />
+        {/* show preview */}
+        {imageFile && (
+          <img
+            src={URL.createObjectURL(imageFile)}
+            alt="Preview"
+            style={{ width: 100, height: 100, objectFit: "cover" }}
+          />
+        )}
+      </div>
+      <button onClick={createToken} disabled={loading || isUploading}>
+        {isUploading
+          ? "Uploading metadata..."
+          : loading
+          ? "Creating token..."
+          : "Create token"}
+      </button>
     </div>
 
     // <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden relative">
