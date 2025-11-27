@@ -7,11 +7,7 @@ import { Toaster } from "sonner";
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
 import TokenMint from "./components/TokenMint";
-import {
-  WalletDisconnectButton,
-  WalletModalProvider,
-  WalletMultiButton,
-} from "@solana/wallet-adapter-react-ui";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 
 const App = () => {
   return (
@@ -21,8 +17,6 @@ const App = () => {
         <WalletProvider wallets={[]}>
           <WalletModalProvider>
             <div>
-              <WalletMultiButton />
-              <WalletDisconnectButton />
               <TokenMint />
             </div>
           </WalletModalProvider>
