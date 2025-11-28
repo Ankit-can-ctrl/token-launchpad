@@ -23,7 +23,11 @@ import { toast } from "sonner";
 import { useMetadataUpload } from "../hooks/useMetadataUpload";
 import { createMetadataInstruction } from "../utils/metaplex";
 
-const TokenMint = () => {
+const TokenMint = ({
+  setManageToken,
+}: {
+  setManageToken: (show: boolean) => void;
+}) => {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useWallet();
   const { uploadMetadata, isUploading } = useMetadataUpload();
@@ -442,6 +446,40 @@ const TokenMint = () => {
             width: 20px !important;
             height: 20px !important;
           }
+
+          .manage-token-wrapper {
+            position: absolute;
+            top: 24px;
+            right: 40px;
+            z-index: 5;
+          }
+
+          .manage-token-button {
+            font-family: 'Caveat', cursive;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #fffef9;
+            color: #2d2d2d;
+            border: 2.5px solid #2d2d2d;
+            border-radius: 6px 14px 10px 16px;
+            padding: 10px 20px;
+            box-shadow: 4px 4px 0 #2d2d2d;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+
+          .manage-token-button:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #2d2d2d;
+          }
+
+          .manage-token-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #2d2d2d;
+          }
         `}
       </style>
 
@@ -458,17 +496,24 @@ const TokenMint = () => {
           <circle cx="10" cy="10" r="3" />
           <circle cx="30" cy="15" r="2" />
         </svg>
-
-        <svg
-          className="doodle-corner top-4 right-4"
-          viewBox="0 0 40 40"
-          fill="none"
-          stroke="#2d2d2d"
-          strokeWidth="2"
-        >
-          <path d="M10 10 L 30 30 M 30 10 L 10 30" strokeLinecap="round" />
-        </svg>
-
+        <div className="manage-token-wrapper">
+          <button
+            onClick={() => setManageToken(true)}
+            className="manage-token-button"
+          >
+            <span>Manage your tokens</span>
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M5 12h14" />
+              <path d="M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
         {/* Floating shapes */}
         <div className="absolute top-20 right-20 w-16 h-16 border-2 border-dashed border-gray-300 rounded-full floating opacity-30" />
         <div
@@ -478,7 +523,6 @@ const TokenMint = () => {
             borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%",
           }}
         />
-
         <div className="max-w-xl mx-auto relative">
           {/* Header */}
           <div className="text-center mb-10">

@@ -1,5 +1,6 @@
 import {
   createCreateMetadataAccountV3Instruction,
+  createUpdateMetadataAccountV2Instruction,
   PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
@@ -16,6 +17,40 @@ export const getMetadataPDA = (mint: PublicKey): PublicKey => {
     TOKEN_METADATA_PROGRAM_ID
   );
   return metadataPDA;
+};
+
+// to update the metadata of the token
+export const updateMetadataInstruction = (
+  mint: PublicKey,
+  updateAuthority: PublicKey,
+  name: string,
+  symbol: string,
+  uri: string
+): TransactionInstruction => {
+  const metadataPDA = getMetadataPDA(mint);
+
+  return createUpdateMetadataAccountV2Instruction(
+    {
+      metadata: metadataPDA,
+      updateAuthority: updateAuthority,
+    },
+    {
+      updateMetadataAccountArgsV2: {
+        data: {
+          name: name,
+          symbol: symbol,
+          uri: uri,
+          sellerFeeBasisPoints: 0,
+          creators: null,
+          collection: null,
+          uses: null,
+        },
+        updateAuthority: updateAuthority,
+        primarySaleHappened: null,
+        isMutable: true,
+      },
+    }
+  );
 };
 
 // create metadata account instruction
