@@ -115,20 +115,23 @@ const UpdateToken = ({ selectedToken }: UpdateTokenProps) => {
   // Loading State
   if (isLoading) {
     return (
-      <div className="sketch-box p-8 text-center w-full max-w-md">
-        <span className="loading-spinner" />
-        <p className="sketch-alt-font text-gray-500 mt-4">
-          Loading token metadata...
-        </p>
+      <div className="w-full">
+        <div className="sketch-box p-8 text-center">
+          <span className="loading-spinner" />
+          <p className="sketch-alt-font text-gray-500 mt-4">
+            Loading token metadata...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="sketch-box p-6 w-full "
-      style={{ transform: "rotate(-0.5deg)" }}
-    >
+    <div className="w-full">
+      <div
+        className="sketch-box p-6"
+        style={{ transform: "rotate(-0.5deg)" }}
+      >
       {/* Card Header */}
       <div className="text-center mb-6">
         <h2 className="sketch-font text-2xl font-bold text-gray-800">
@@ -274,18 +277,19 @@ const UpdateToken = ({ selectedToken }: UpdateTokenProps) => {
         />
       </div>
 
-      {/* Update Button */}
-      <button
-        className="sketch-button w-full"
-        onClick={handleUpdate}
-        disabled={isUpdating}
-      >
-        {isUpdating ? "✎ updating metadata..." : "✎ Update Token"}
-      </button>
+        {/* Update Button */}
+        <button
+          className="sketch-button w-full"
+          onClick={handleUpdate}
+          disabled={isUpdating}
+        >
+          {isUpdating ? "✎ updating metadata..." : "✎ Update Token"}
+        </button>
 
-      <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
-        only fields you change will be updated
-      </p>
+        <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
+          only fields you change will be updated
+        </p>
+      </div>
     </div>
   );
 };

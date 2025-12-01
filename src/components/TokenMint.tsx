@@ -523,7 +523,7 @@ const TokenMint = ({
             borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%",
           }}
         />
-        <div className="max-w-xl mx-auto relative">
+        <div className="w-full mx-auto relative px-8 lg:px-16">
           {/* Header */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 mb-4">
@@ -541,7 +541,7 @@ const TokenMint = ({
 
           {/* Wallet Status */}
           <div
-            className="sketch-box p-4 mb-6"
+            className="sketch-box p-4 mb-6 max-w-md mx-auto"
             style={{ transform: "rotate(0.5deg)" }}
           >
             <div className="flex items-center justify-between">
@@ -573,11 +573,21 @@ const TokenMint = ({
             </div>
           </div>
 
-          {/* Main Form Card */}
-          <div className="sketch-box p-6 mb-6">
-            {/* Token Image Upload */}
-            <div className="mb-6">
-              <label className="sketch-label">token image</label>
+          {/* Main Form - 3 Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Card 1: Token Image */}
+            <div
+              className="sketch-box p-6"
+              style={{ transform: "rotate(-0.3deg)" }}
+            >
+              <div className="text-center mb-4">
+                <h2 className="sketch-font text-xl font-bold text-gray-800">
+                  Token Image
+                </h2>
+                <p className="sketch-alt-font text-gray-500 text-sm">
+                  upload your logo 🖼️
+                </p>
+              </div>
               <div
                 className="upload-zone p-6 text-center"
                 onClick={() => fileInputRef.current?.click()}
@@ -600,9 +610,18 @@ const TokenMint = ({
                       className="w-24 h-24 object-cover rounded-lg border-2 border-gray-400"
                       style={{ borderRadius: "10px 20px 15px 25px" }}
                     />
-                    <span className="sketch-alt-font text-gray-600">
+                    <span className="sketch-alt-font text-gray-600 text-sm">
                       {imageFile.name}
                     </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImageFile(null);
+                      }}
+                      className="sketch-alt-font text-sm text-red-500 hover:underline"
+                    >
+                      ✕ Remove
+                    </button>
                   </div>
                 ) : (
                   <div className="py-4">
@@ -616,7 +635,7 @@ const TokenMint = ({
                       <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p className="sketch-alt-font text-gray-500">
-                      click to upload or drag & drop
+                      click to upload
                     </p>
                     <p className="sketch-alt-font text-sm text-gray-400 mt-1">
                       PNG, JPG, GIF, WEBP
@@ -626,47 +645,75 @@ const TokenMint = ({
               </div>
             </div>
 
-            {/* Token Name */}
-            <div className="mb-5">
-              <label className="sketch-label">token name</label>
-              <input
-                type="text"
-                className="sketch-input"
-                placeholder="My Awesome Token"
-                value={tokenName}
-                onChange={(e) => setTokenName(e.target.value)}
-              />
-            </div>
+            {/* Card 2: Token Details */}
+            <div
+              className="sketch-box p-6"
+              style={{ transform: "rotate(0.3deg)" }}
+            >
+              <div className="text-center mb-4">
+                <h2 className="sketch-font text-xl font-bold text-gray-800">
+                  Token Details
+                </h2>
+                <p className="sketch-alt-font text-gray-500 text-sm">
+                  name & description ✏️
+                </p>
+              </div>
 
-            {/* Token Symbol */}
-            <div className="mb-5">
-              <label className="sketch-label">symbol</label>
-              <input
-                type="text"
-                className="sketch-input uppercase"
-                placeholder="MAT"
-                value={tokenSymbol}
-                onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
-                maxLength={10}
-              />
-            </div>
+              {/* Token Name */}
+              <div className="mb-4">
+                <label className="sketch-label">token name</label>
+                <input
+                  type="text"
+                  className="sketch-input"
+                  placeholder="My Awesome Token"
+                  value={tokenName}
+                  onChange={(e) => setTokenName(e.target.value)}
+                />
+              </div>
 
-            {/* Description */}
-            <div className="mb-5">
-              <label className="sketch-label">description</label>
-              <textarea
-                className="sketch-input resize-none"
-                placeholder="Tell the world about your token..."
-                value={tokenDescription}
-                onChange={(e) => setTokenDescription(e.target.value)}
-                rows={3}
-                style={{ borderBottom: "2px dashed #888" }}
-              />
-            </div>
+              {/* Token Symbol */}
+              <div className="mb-4">
+                <label className="sketch-label">symbol</label>
+                <input
+                  type="text"
+                  className="sketch-input uppercase"
+                  placeholder="MAT"
+                  value={tokenSymbol}
+                  onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+                  maxLength={10}
+                />
+              </div>
 
-            {/* Two columns */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+              {/* Description */}
               <div>
+                <label className="sketch-label">description</label>
+                <textarea
+                  className="sketch-input resize-none"
+                  placeholder="Tell the world about your token..."
+                  value={tokenDescription}
+                  onChange={(e) => setTokenDescription(e.target.value)}
+                  rows={3}
+                  style={{ borderBottom: "2px dashed #888" }}
+                />
+              </div>
+            </div>
+
+            {/* Card 3: Supply & Create */}
+            <div
+              className="sketch-box p-6"
+              style={{ transform: "rotate(-0.5deg)" }}
+            >
+              <div className="text-center mb-4">
+                <h2 className="sketch-font text-xl font-bold text-gray-800">
+                  Token Supply
+                </h2>
+                <p className="sketch-alt-font text-gray-500 text-sm">
+                  configure & launch 🚀
+                </p>
+              </div>
+
+              {/* Initial Supply */}
+              <div className="mb-4">
                 <label className="sketch-label">initial supply</label>
                 <input
                   type="number"
@@ -677,7 +724,9 @@ const TokenMint = ({
                   min={0}
                 />
               </div>
-              <div>
+
+              {/* Decimals */}
+              <div className="mb-6">
                 <label className="sketch-label">decimals</label>
                 <div className="relative">
                   <input
@@ -694,29 +743,29 @@ const TokenMint = ({
                   </span>
                 </div>
               </div>
+
+              {/* Create Button */}
+              <button
+                className="sketch-button w-full"
+                onClick={createToken}
+                disabled={loading || isUploading}
+              >
+                {isUploading
+                  ? "✎ uploading..."
+                  : loading
+                  ? "✎ creating..."
+                  : "✎ Create Token"}
+              </button>
+
+              <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
+                ~0.015 SOL
+              </p>
             </div>
-
-            {/* Create Button */}
-            <button
-              className="sketch-button w-full"
-              onClick={createToken}
-              disabled={loading || isUploading}
-            >
-              {isUploading
-                ? "✎ uploading metadata..."
-                : loading
-                ? "✎ creating token..."
-                : "✎ Create Token"}
-            </button>
-
-            <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
-              estimated cost: ~0.015 SOL
-            </p>
           </div>
 
           {/* Results */}
           {(mintAddress || ataKey) && (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {mintAddress && (
                 <div
                   className="result-card p-4"

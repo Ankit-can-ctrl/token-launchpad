@@ -311,7 +311,7 @@ const ManageToken = ({
           </button>
         </nav>
 
-        <div className="max-w-5xl mx-auto relative">
+        <div className="w-full mx-auto relative px-8 lg:px-16">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
@@ -364,7 +364,7 @@ const ManageToken = ({
 
           {/* Child Components */}
           {selectedToken && (
-            <div className="flex flex-col lg:flex-row items-start justify-center gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               <UpdateToken selectedToken={selectedToken} />
               <TokenDashboard selectedToken={selectedToken} />
             </div>

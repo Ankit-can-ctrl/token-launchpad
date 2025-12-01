@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { useConnection } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getAccountInfo } from "../utils/getAccountInfo";
+import { toast } from "sonner";
+import {
+  createAssociatedTokenAccountInstruction,
+  createMintToInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
+import { PublicKey, Transaction } from "@solana/web3.js";
 
 interface TokenDashboardProps {
   selectedToken: string;
@@ -18,6 +25,71 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
   const { connection } = useConnection();
   const [mintData, setMintData] = useState<MintData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [tokenAmount, setTokenAmount] = useState(0);
+  const [recipientPubKey, setRecipientPubKey] = useState("");
+  const { publicKey, sendTransaction } = useWallet();
+  const [checked, setChecked] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleMintToken = async () => {
+    try {
+      setLoading(true);
+      toast.message("Minting token...");
+      if (!publicKey) {
+        toast.error("Connect your wallet.");
+        return;
+      }
+      const mintPubKey = new PublicKey(selectedToken);
+
+      let otherUserKey;
+      if (recipientPubKey === "") {
+        otherUserKey = publicKey;
+      } else {
+        otherUserKey = new PublicKey(recipientPubKey);
+      }
+
+      // get or create ATA
+      const ata = await getAssociatedTokenAddress(mintPubKey, otherUserKey!);
+
+      const ataInfo = await connection.getAccountInfo(ata);
+
+      const transaction = new Transaction();
+
+      // if ata does not exist
+      if (!ataInfo) {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            publicKey,
+            ata,
+            otherUserKey,
+            mintPubKey
+          )
+        );
+      }
+      if (!mintData?.decimals) {
+        throw new Error("Please select a token");
+      }
+
+      transaction.add(
+        createMintToInstruction(
+          mintPubKey,
+          ata,
+          publicKey,
+          tokenAmount * 10 ** mintData?.decimals
+        )
+      );
+
+      const signature = await sendTransaction(transaction, connection);
+      console.log(signature);
+      setRefreshKey((prev) => prev + 1);
+      toast.success("Token mint successfull.");
+    } catch (error) {
+      toast.error("something went wrong while minting token.");
+      console.log("Minting more token error :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +105,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
       }
     };
     fetchData();
-  }, [connection, selectedToken]);
+  }, [connection, selectedToken, refreshKey]);
 
   const formatSupply = (supply: string, decimals: number) => {
     const num = BigInt(supply);
@@ -52,7 +124,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-6 lg:col-span-2">
       {/* Token Details Card */}
       <div className="sketch-box p-6" style={{ transform: "rotate(0.5deg)" }}>
         {/* Card Header */}
@@ -145,7 +217,85 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
         )}
       </div>
 
-      {/* Space for other components/cards can be added here */}
+      {/* Mint More Tokens Card */}
+      <div className="sketch-box p-6" style={{ transform: "rotate(-0.3deg)" }}>
+        {/* Card Header */}
+        <div className="text-center mb-6">
+          <h2 className="sketch-font text-2xl font-bold text-gray-800">
+            Mint Tokens
+          </h2>
+          <p className="sketch-alt-font text-gray-500 text-sm">
+            create more tokens ✨
+          </p>
+        </div>
+
+        {/* Mint to own wallet checkbox */}
+        <div className="mb-5">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => setChecked(e.target.checked)}
+              className="w-5 h-5 accent-gray-800 cursor-pointer"
+              style={{
+                border: "2px solid #2d2d2d",
+                borderRadius: "4px",
+              }}
+            />
+            <span className="sketch-alt-font text-gray-700">
+              Mint to my own wallet
+            </span>
+          </label>
+        </div>
+
+        {/* Recipient Public Key */}
+        <div className="mb-5">
+          <label className="sketch-label">recipient's public key</label>
+          <input
+            type="text"
+            className="sketch-input"
+            placeholder="Enter wallet address..."
+            value={recipientPubKey}
+            onChange={(e) => setRecipientPubKey(e.target.value)}
+            disabled={checked}
+            style={{
+              opacity: checked ? 0.5 : 1,
+              cursor: checked ? "not-allowed" : "text",
+            }}
+          />
+          {checked && (
+            <p className="sketch-alt-font text-xs text-gray-400 mt-1 italic">
+              disabled when minting to your own wallet
+            </p>
+          )}
+        </div>
+
+        {/* Token Amount */}
+        <div className="mb-6">
+          <label className="sketch-label">amount to mint</label>
+          <input
+            type="number"
+            min={0}
+            className="sketch-input"
+            placeholder="Enter amount..."
+            value={tokenAmount || ""}
+            onChange={(e) => setTokenAmount(Number(e.target.value))}
+          />
+        </div>
+
+        {/* Mint Button */}
+        <button
+          className="sketch-button w-full"
+          onClick={handleMintToken}
+          disabled={loading || tokenAmount <= 0}
+        >
+          {loading ? "⏳ Minting..." : "🪙 Mint Tokens"}
+        </button>
+
+        <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
+          tokens will be minted to {checked ? "your wallet" : "the recipient"}
+        </p>
+      </div>
     </div>
   );
 };
