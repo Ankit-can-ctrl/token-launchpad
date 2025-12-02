@@ -8,6 +8,7 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import { PublicKey, Transaction } from "@solana/web3.js";
+import { revokeMintAuthority } from "../utils/controls";
 
 interface TokenDashboardProps {
   selectedToken: string;
@@ -30,6 +31,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
   const { publicKey, sendTransaction } = useWallet();
   const [checked, setChecked] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [revokingAuthority, setRevokingAuthority] = useState(false);
 
   const handleMintToken = async () => {
     try {
@@ -88,6 +90,25 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
       console.log("Minting more token error :", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRevokeMintAuthority = async () => {
+    if (!publicKey) throw new Error("Connect your wallet.");
+    try {
+      setRevokingAuthority(true);
+      await revokeMintAuthority(
+        selectedToken,
+        connection,
+        publicKey,
+        sendTransaction
+      );
+      toast.success("Mint Authority Revoked!");
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong while revoking mint authority.");
+    } finally {
+      setRevokingAuthority(false);
     }
   };
 
@@ -295,6 +316,14 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
         <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
           tokens will be minted to {checked ? "your wallet" : "the recipient"}
         </p>
+      </div>
+
+      {/* Token Authorities card */}
+      <div>
+        {/* onclicking this a warning modal with checkmark and agree option should pop up informing what will happen */}
+        <button>
+          {revokingAuthority ? "Please wait" : "Revoke token mint"}
+        </button>
       </div>
     </div>
   );
