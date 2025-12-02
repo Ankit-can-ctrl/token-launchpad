@@ -138,7 +138,7 @@ const UpdateToken = ({ selectedToken }: UpdateTokenProps) => {
           Update Metadata
         </h2>
         <p className="sketch-alt-font text-gray-500 text-sm">
-          modify your token's appearance ✏️
+          modify your token's appearance
         </p>
       </div>
 

@@ -32,6 +32,13 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
   const [checked, setChecked] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [revokingAuthority, setRevokingAuthority] = useState(false);
+  const [newMintAuthority, setNewMintAuthority] = useState("");
+
+  // Modal states
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [revokeAgreed, setRevokeAgreed] = useState(false);
+  const [transferAgreed, setTransferAgreed] = useState(false);
 
   const handleMintToken = async () => {
     try {
@@ -93,7 +100,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
     }
   };
 
-  const handleRevokeMintAuthority = async () => {
+  const handleMintAuthority = async (newAuthority: string | null) => {
     if (!publicKey) throw new Error("Connect your wallet.");
     try {
       setRevokingAuthority(true);
@@ -101,15 +108,37 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
         selectedToken,
         connection,
         publicKey,
-        sendTransaction
+        sendTransaction,
+        newAuthority
       );
-      toast.success("Mint Authority Revoked!");
+      if (newAuthority) {
+        toast.success("Mint Authority Transferred!");
+      } else {
+        toast.success("Mint Authority Revoked!");
+      }
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong while revoking mint authority.");
+      toast.error("Something went wrong while updating mint authority.");
     } finally {
       setRevokingAuthority(false);
+      setShowRevokeModal(false);
+      setShowTransferModal(false);
+      setRevokeAgreed(false);
+      setTransferAgreed(false);
     }
+  };
+
+  const handleRevokeConfirm = () => {
+    handleMintAuthority(null);
+  };
+
+  const handleTransferConfirm = () => {
+    if (!newMintAuthority.trim()) {
+      toast.error("Please enter a valid public key.");
+      return;
+    }
+    handleMintAuthority(newMintAuthority.trim());
   };
 
   useEffect(() => {
@@ -154,7 +183,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
             Token Details
           </h2>
           <p className="sketch-alt-font text-gray-500 text-sm">
-            on-chain token information 📊
+            on-chain token information
           </p>
         </div>
 
@@ -197,7 +226,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
                   mintData.isInitialized ? "text-green-600" : "text-red-500"
                 }`}
               >
-                {mintData.isInitialized ? "✓ Yes" : "✗ No"}
+                {mintData.isInitialized ? "Yes" : "No"}
               </span>
             </div>
 
@@ -213,7 +242,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
                 </span>
               ) : (
                 <span className="sketch-alt-font text-sm text-gray-400 italic">
-                  None (Immutable) 🔒
+                  None (Immutable)
                 </span>
               )}
             </div>
@@ -230,7 +259,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
                 </span>
               ) : (
                 <span className="sketch-alt-font text-sm text-gray-400 italic">
-                  None ❄️
+                  None
                 </span>
               )}
             </div>
@@ -246,7 +275,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
             Mint Tokens
           </h2>
           <p className="sketch-alt-font text-gray-500 text-sm">
-            create more tokens ✨
+            create more tokens
           </p>
         </div>
 
@@ -310,7 +339,7 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
           onClick={handleMintToken}
           disabled={loading || tokenAmount <= 0}
         >
-          {loading ? "⏳ Minting..." : "🪙 Mint Tokens"}
+          {loading ? "Minting..." : "Mint Tokens"}
         </button>
 
         <p className="text-center sketch-alt-font text-sm text-gray-400 mt-3">
@@ -318,13 +347,260 @@ const TokenDashboard = ({ selectedToken }: TokenDashboardProps) => {
         </p>
       </div>
 
-      {/* Token Authorities card */}
-      <div>
-        {/* onclicking this a warning modal with checkmark and agree option should pop up informing what will happen */}
-        <button>
-          {revokingAuthority ? "Please wait" : "Revoke token mint"}
-        </button>
+      {/* Token Authorities Card */}
+      <div
+        className="sketch-box p-6 xl:col-span-2"
+        style={{ transform: "rotate(0.2deg)" }}
+      >
+        {/* Card Header */}
+        <div className="text-center mb-6">
+          <h2 className="sketch-font text-2xl font-bold text-gray-800">
+            Token Authorities
+          </h2>
+          <p className="sketch-alt-font text-gray-500 text-sm">
+            manage mint & freeze permissions
+          </p>
+        </div>
+
+        {!mintData ? (
+          <div className="py-8 text-center">
+            <p className="sketch-alt-font text-gray-400">
+              Select a token to manage authorities
+            </p>
+          </div>
+        ) : !mintData.mintAuthority ? (
+          <div className="py-8 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+              <span className="text-2xl font-bold">[ ]</span>
+              <span className="sketch-alt-font text-gray-600">
+                Mint authority is already revoked (Immutable)
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Revoke Mint Authority */}
+            <div className="flex flex-col h-full">
+              <span className="sketch-label mb-2">revoke mint authority</span>
+              <p className="sketch-alt-font text-sm text-gray-500 mb-4 flex-grow">
+                Permanently disable the ability to mint more tokens. This action
+                cannot be undone!
+              </p>
+              <button
+                className="sketch-button w-full mt-auto"
+                onClick={() => setShowRevokeModal(true)}
+                disabled={revokingAuthority}
+                style={{
+                  background: "#dc2626",
+                  borderColor: "#dc2626",
+                }}
+              >
+                Revoke Forever
+              </button>
+            </div>
+
+            {/* Transfer Mint Authority */}
+            <div className="flex flex-col h-full">
+              <span className="sketch-label mb-2">transfer mint authority</span>
+              <p className="sketch-alt-font text-sm text-gray-500 mb-4 flex-grow">
+                Transfer minting rights to another wallet address.
+              </p>
+              <button
+                className="sketch-button w-full mt-auto"
+                onClick={() => setShowTransferModal(true)}
+                disabled={revokingAuthority}
+              >
+                Transfer Authority
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Revoke Mint Authority Modal */}
+      {showRevokeModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <div
+            className="sketch-box p-6 max-w-md w-full"
+            style={{ transform: "rotate(-0.5deg)" }}
+          >
+            <div className="text-center mb-4">
+              <span className="sketch-font text-5xl mb-4 block">!</span>
+              <h3 className="sketch-font text-2xl font-bold text-red-600">
+                Warning: Irreversible Action
+              </h3>
+            </div>
+
+            <div className="sketch-alt-font text-gray-700 space-y-3 mb-6">
+              <p>
+                You are about to permanently revoke the mint authority for this
+                token.
+              </p>
+              <div
+                className="p-3 rounded-lg"
+                style={{
+                  background: "rgba(220, 38, 38, 0.1)",
+                  border: "2px dashed #dc2626",
+                }}
+              >
+                <p className="text-red-700 font-semibold">This means:</p>
+                <ul className="list-disc list-inside text-red-600 text-sm mt-2 space-y-1">
+                  <li>No more tokens can ever be minted</li>
+                  <li>The total supply will be fixed forever</li>
+                  <li>This action cannot be reversed</li>
+                </ul>
+              </div>
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer mb-6">
+              <input
+                type="checkbox"
+                checked={revokeAgreed}
+                onChange={(e) => setRevokeAgreed(e.target.checked)}
+                className="w-5 h-5 mt-0.5 accent-red-600 cursor-pointer"
+                style={{ border: "2px solid #dc2626", borderRadius: "4px" }}
+              />
+              <span className="sketch-alt-font text-gray-700 text-sm">
+                I understand that this action is permanent and I want to revoke
+                the mint authority forever.
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                className="sketch-button flex-1"
+                onClick={() => {
+                  setShowRevokeModal(false);
+                  setRevokeAgreed(false);
+                }}
+                style={{
+                  background: "#fffef9",
+                  color: "#2d2d2d",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="sketch-button flex-1"
+                onClick={handleRevokeConfirm}
+                disabled={!revokeAgreed || revokingAuthority}
+                style={{
+                  background: revokeAgreed ? "#dc2626" : "#888",
+                  borderColor: revokeAgreed ? "#dc2626" : "#888",
+                }}
+              >
+                {revokingAuthority ? "Revoking..." : "Revoke"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Mint Authority Modal */}
+      {showTransferModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <div
+            className="sketch-box p-6 max-w-md w-full"
+            style={{ transform: "rotate(0.5deg)" }}
+          >
+            <div className="text-center mb-4">
+              <span className="sketch-font text-5xl mb-4 block">~</span>
+              <h3 className="sketch-font text-2xl font-bold text-gray-800">
+                Transfer Mint Authority
+              </h3>
+            </div>
+
+            <div className="sketch-alt-font text-gray-700 space-y-3 mb-6">
+              <p>
+                You are about to transfer the mint authority to another wallet.
+              </p>
+              <div
+                className="p-3 rounded-lg"
+                style={{
+                  background: "rgba(251, 191, 36, 0.1)",
+                  border: "2px dashed #f59e0b",
+                }}
+              >
+                <p className="text-amber-700 font-semibold">Important:</p>
+                <ul className="list-disc list-inside text-amber-600 text-sm mt-2 space-y-1">
+                  <li>The new authority will be able to mint tokens</li>
+                  <li>You will lose minting permissions</li>
+                  <li>Make sure you trust the recipient</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="sketch-label">new authority public key</label>
+              <input
+                type="text"
+                className="sketch-input"
+                placeholder="Enter wallet address..."
+                value={newMintAuthority}
+                onChange={(e) => setNewMintAuthority(e.target.value)}
+              />
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer mb-6">
+              <input
+                type="checkbox"
+                checked={transferAgreed}
+                onChange={(e) => setTransferAgreed(e.target.checked)}
+                className="w-5 h-5 mt-0.5 accent-amber-600 cursor-pointer"
+                style={{ border: "2px solid #f59e0b", borderRadius: "4px" }}
+              />
+              <span className="sketch-alt-font text-gray-700 text-sm">
+                I confirm that I want to transfer the mint authority to the
+                address above.
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                className="sketch-button flex-1"
+                onClick={() => {
+                  setShowTransferModal(false);
+                  setTransferAgreed(false);
+                  setNewMintAuthority("");
+                }}
+                style={{
+                  background: "#fffef9",
+                  color: "#2d2d2d",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="sketch-button flex-1"
+                onClick={handleTransferConfirm}
+                disabled={
+                  !transferAgreed ||
+                  !newMintAuthority.trim() ||
+                  revokingAuthority
+                }
+                style={{
+                  background:
+                    transferAgreed && newMintAuthority.trim()
+                      ? "#2d2d2d"
+                      : "#888",
+                  borderColor:
+                    transferAgreed && newMintAuthority.trim()
+                      ? "#2d2d2d"
+                      : "#888",
+                }}
+              >
+                {revokingAuthority ? "Transferring..." : "Transfer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

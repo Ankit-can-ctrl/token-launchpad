@@ -535,7 +535,7 @@ const TokenMint = ({
               <span className="sketch-title">Token Launchpad</span>
             </h1>
             <p className="sketch-alt-font text-gray-500 text-lg">
-              sketch your token into existence ✨
+              sketch your token into existence
             </p>
           </div>
 
@@ -585,7 +585,7 @@ const TokenMint = ({
                   Token Image
                 </h2>
                 <p className="sketch-alt-font text-gray-500 text-sm">
-                  upload your logo 🖼️
+                  upload your logo
                 </p>
               </div>
               <div
@@ -655,7 +655,7 @@ const TokenMint = ({
                   Token Details
                 </h2>
                 <p className="sketch-alt-font text-gray-500 text-sm">
-                  name & description ✏️
+                  name & description
                 </p>
               </div>
 
@@ -708,7 +708,7 @@ const TokenMint = ({
                   Token Supply
                 </h2>
                 <p className="sketch-alt-font text-gray-500 text-sm">
-                  configure & launch 🚀
+                  configure & launch
                 </p>
               </div>
 
@@ -772,7 +772,7 @@ const TokenMint = ({
                   style={{ transform: "rotate(-0.5deg)" }}
                 >
                   <div className="pt-4">
-                    <span className="sketch-label text-sm">✓ mint address</span>
+                    <span className="sketch-label text-sm">mint address</span>
                     <div className="flex items-center justify-between gap-2 mt-1">
                       <code className="sketch-alt-font text-sm text-gray-700 break-all">
                         {mintAddress}
@@ -814,7 +814,7 @@ const TokenMint = ({
                 >
                   <div className="pt-4">
                     <span className="sketch-label text-sm">
-                      ✓ token account (ATA)
+                      token account (ATA)
                     </span>
                     <div className="flex items-center justify-between gap-2 mt-1">
                       <code className="sketch-alt-font text-sm text-gray-700 break-all">
@@ -855,7 +855,7 @@ const TokenMint = ({
           {/* Footer */}
           <div className="text-center mt-10">
             <p className="sketch-alt-font text-sm text-gray-400">
-              powered by solana • sketched with ♡
+              powered by solana
             </p>
           </div>
         </div>

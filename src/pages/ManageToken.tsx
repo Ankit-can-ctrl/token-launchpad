@@ -323,7 +323,7 @@ const ManageToken = ({
               <span className="sketch-title">Manage Your Token</span>
             </h1>
             <p className="sketch-alt-font text-gray-500 text-lg">
-              select a token and manage its properties ✨
+              select a token and manage its properties
             </p>
           </div>
 
@@ -374,7 +374,7 @@ const ManageToken = ({
           {!selectedToken && !isFetchingTokens && tokens.length > 0 && (
             <div className="text-center py-12">
               <p className="sketch-alt-font text-gray-400 text-lg">
-                ☝️ Select a token above to get started
+                Select a token above to get started
               </p>
             </div>
           )}
@@ -382,7 +382,7 @@ const ManageToken = ({
           {/* Footer */}
           <div className="text-center mt-12">
             <p className="sketch-alt-font text-sm text-gray-400">
-              powered by solana • sketched with ♡
+              powered by solana
             </p>
           </div>
         </div>

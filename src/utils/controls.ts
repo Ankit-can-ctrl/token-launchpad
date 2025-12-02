@@ -9,19 +9,24 @@ export const revokeMintAuthority = async (
   mintKey: string,
   connection: Connection,
   publicKey: PublicKey,
-  sendTransaction: (tx: Transaction, connection: Connection) => Promise<string>
+  sendTransaction: (tx: Transaction, connection: Connection) => Promise<string>,
+  newMintAuthority?: string | null
 ) => {
   if (!publicKey) {
     toast.error("Connect your wallet.");
     return;
   }
   const mintPubKey = new PublicKey(mintKey);
+  const newAuthority =
+    newMintAuthority === null || newMintAuthority === undefined
+      ? null
+      : new PublicKey(newMintAuthority);
 
   const ix = createSetAuthorityInstruction(
     mintPubKey,
     publicKey,
     AuthorityType.MintTokens,
-    null // can also add new authority public Key
+    newAuthority
   );
 
   const tx = new Transaction();
